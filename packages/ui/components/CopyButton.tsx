@@ -1,4 +1,4 @@
-import type React from 'react';
+import React from 'react';
 import { CopyIcon, CheckIcon } from './icons/copyIcons';
 import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 
