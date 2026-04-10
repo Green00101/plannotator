@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { CopyIcon, CheckIcon } from '@plannotator/ui/components/icons/copyIcons';
+import { useCopyToClipboard } from '@plannotator/ui/hooks/useCopyToClipboard';
 import { CodeAnnotation, type EditorAnnotation } from '@plannotator/ui/types';
 import { isCurrentUser } from '@plannotator/ui/utils/identity';
 import { EditorAnnotationCard } from '@plannotator/ui/components/EditorAnnotationCard';
@@ -148,7 +150,7 @@ export const ReviewSidebar: React.FC<ReviewSidebarProps> = /* React.memo */({
   onOpenPRPanel,
 }) => {
   const totalCount = annotations.length + (editorAnnotations?.length ?? 0);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
   const [activeTab, setActiveTab] = useState<ReviewSidebarTab>('annotations');
   const hasAgents = REVIEW_AGENTS_ENABLED && !!agentCapabilities?.available;
   const runningAgentCount = (agentJobs ?? []).filter(j => j.status === 'running' || j.status === 'starting').length;
@@ -176,13 +178,7 @@ export const ReviewSidebar: React.FC<ReviewSidebarProps> = /* React.memo */({
 
   const handleQuickCopy = async () => {
     if (!feedbackMarkdown) return;
-    try {
-      await navigator.clipboard.writeText(feedbackMarkdown);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (e) {
-      console.error('Failed to copy:', e);
-    }
+    await copy(feedbackMarkdown);
   };
 
   // Group annotations by file
@@ -451,16 +447,12 @@ export const ReviewSidebar: React.FC<ReviewSidebarProps> = /* React.memo */({
             >
               {copied ? (
                 <>
-                  <svg className="w-3.5 h-3.5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
+                  <CheckIcon className="w-3.5 h-3.5 text-success" />
                   Copied
                 </>
               ) : (
                 <>
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
+                  <CopyIcon className="w-3.5 h-3.5" />
                   Copy Feedback
                 </>
               )}

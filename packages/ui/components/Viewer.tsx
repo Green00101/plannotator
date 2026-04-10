@@ -7,6 +7,8 @@ import { Frontmatter, computeListIndices } from '../utils/parser';
 import { ListMarker } from './ListMarker';
 import { AnnotationToolbar } from './AnnotationToolbar';
 import { FloatingQuickLabelPicker } from './FloatingQuickLabelPicker';
+import { CopyIcon, CheckIcon } from './icons/copyIcons';
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 
 // Debug error boundary to catch silent toolbar crashes
 class ToolbarErrorBoundary extends React.Component<
@@ -152,18 +154,12 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(({
   onToggleCheckbox,
   checkboxOverrides,
 }, ref) => {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy: copyToClipboard } = useCopyToClipboard();
   const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
   const globalCommentButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleCopyPlan = async () => {
-    try {
-      await navigator.clipboard.writeText(markdown);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (e) {
-      console.error('Failed to copy:', e);
-    }
+    await copyToClipboard(markdown);
   };
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredCodeBlock, setHoveredCodeBlock] = useState<{ block: Block; element: HTMLElement } | null>(null);
@@ -509,16 +505,12 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(({
           >
             {copied ? (
               <>
-                <svg className="w-3.5 h-3.5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
+                <CheckIcon className="w-3.5 h-3.5 text-success" />
                 Copied!
               </>
             ) : (
               <>
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
+                <CopyIcon className="w-3.5 h-3.5" />
                 {actionsLabelMode === 'full' && <span>{copyLabel || (linkedDocInfo ? 'Copy file' : 'Copy plan')}</span>}
                 {actionsLabelMode === 'short' && <span>Copy</span>}
               </>
@@ -1143,7 +1135,7 @@ interface CodeBlockProps {
 }
 
 const CodeBlock: React.FC<CodeBlockProps> = ({ block, onHover, onLeave, isHovered }) => {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
   const containerRef = useRef<HTMLDivElement>(null);
   const codeRef = useRef<HTMLElement>(null);
 
@@ -1158,14 +1150,8 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ block, onHover, onLeave, isHovere
   }, [block.content, block.language]);
 
   const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(block.content);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  }, [block.content]);
+    await copy(block.content);
+  }, [block.content, copy]);
 
   const handleMouseEnter = () => {
     if (containerRef.current) {
@@ -1190,13 +1176,9 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ block, onHover, onLeave, isHovere
         title={copied ? 'Copied!' : 'Copy code'}
       >
         {copied ? (
-          <svg className="w-4 h-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
+          <CheckIcon className="w-4 h-4 text-success" />
         ) : (
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
+          <CopyIcon className="w-4 h-4" />
         )}
       </button>
       <pre className="rounded-lg text-[13px] overflow-x-auto bg-muted/50 border border-border/30">
